@@ -1,0 +1,17 @@
+{
+  "name": "difflint",
+  "version": "0.1.0",
+  "description": "A linter for unified diffs. Flags trailing whitespace, oversized lines, leftover TODO markers, and CRLF in added lines.",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "difflint": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0"
+  }
+}

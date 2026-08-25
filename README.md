@@ -45,6 +45,28 @@ gate or a pre-commit hook:
 git diff --cached | node dist/cli.js || exit 1
 ```
 
+## Configuration
+
+By default all four rules run with a 120-character line limit. To change
+that, drop a `.difflintrc.json` in your project root (difflint walks up
+from the current directory looking for one, so it's found from a
+subdirectory too):
+
+```json
+{
+  "rules": {
+    "todo-marker": false
+  },
+  "maxLineLength": 100
+}
+```
+
+`rules` is a rule-name-to-boolean map; only entries you list are changed,
+so leaving a rule out keeps it enabled. `maxLineLength` sets the threshold
+for `line-too-long`. Both keys are optional, and an invalid config (bad
+JSON, wrong value types) makes difflint exit with an error rather than
+silently ignoring it.
+
 ## Using it as a library
 
 `parseDiff` and the individual rules are exported from `dist/index.js` if

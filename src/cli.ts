@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 import { readFileSync } from 'node:fs';
+import { loadConfig } from './config';
 import { parseDiff } from './parser';
-import { defaultRules, type Finding } from './rules';
+import { buildRules, type Finding } from './rules';
 
 function readInput(): string {
   const arg = process.argv[2];
@@ -22,10 +23,19 @@ function main(): void {
     process.exit(2);
   }
 
+  let rules;
+  try {
+    rules = buildRules(loadConfig());
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(message);
+    process.exit(2);
+  }
+
   const files = parseDiff(input);
   const findings: Finding[] = [];
   for (const file of files) {
-    for (const rule of defaultRules) {
+    for (const rule of rules) {
       findings.push(...rule.check(file));
     }
   }

@@ -1,4 +1,5 @@
 import type { FileDiff } from './parser';
+import type { Config } from './config';
 
 export interface Finding {
   file: string;
@@ -100,3 +101,13 @@ export const carriageReturn: Rule = {
 };
 
 export const defaultRules: Rule[] = [trailingWhitespace, lineTooLong(), todoMarker, carriageReturn];
+
+// Builds the rule set for a run: applies the configured line-length
+// threshold, then drops any rule explicitly set to `false` in config.
+// Rules are enabled unless a config says otherwise, so an empty or
+// partial `rules` block doesn't silently turn everything off.
+export function buildRules(config: Config = {}): Rule[] {
+  const all: Rule[] = [trailingWhitespace, lineTooLong(config.maxLineLength), todoMarker, carriageReturn];
+  const toggles = config.rules ?? {};
+  return all.filter((rule) => toggles[rule.name] !== false);
+}

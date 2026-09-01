@@ -45,6 +45,15 @@ gate or a pre-commit hook:
 git diff --cached | node dist/cli.js || exit 1
 ```
 
+Pass `--format json` to get findings as a JSON array on stdout instead,
+one object per finding with the same `file`, `line`, `rule`, and `message`
+fields as the text output. Useful for feeding the results into another
+tool rather than a terminal:
+
+```
+git diff | node dist/cli.js --format json
+```
+
 ## Configuration
 
 By default all four rules run with a 120-character line limit. To change

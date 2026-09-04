@@ -1,3 +1,4 @@
+import { extname } from 'node:path';
 import type { FileDiff } from './parser';
 import type { Config } from './config';
 
@@ -63,20 +64,110 @@ export function lineTooLong(maxLength = 120): Rule {
   };
 }
 
+// Line-comment tokens by file extension. Where a language supports more
+// than one (PHP allows both // and #), all of them count.
+const LINE_COMMENT_TOKENS: Record<string, string[]> = {
+  '.js': ['//'],
+  '.jsx': ['//'],
+  '.ts': ['//'],
+  '.tsx': ['//'],
+  '.mjs': ['//'],
+  '.cjs': ['//'],
+  '.c': ['//'],
+  '.h': ['//'],
+  '.cpp': ['//'],
+  '.hpp': ['//'],
+  '.cc': ['//'],
+  '.java': ['//'],
+  '.go': ['//'],
+  '.rs': ['//'],
+  '.swift': ['//'],
+  '.kt': ['//'],
+  '.scala': ['//'],
+  '.php': ['//', '#'],
+  '.py': ['#'],
+  '.rb': ['#'],
+  '.sh': ['#'],
+  '.bash': ['#'],
+  '.zsh': ['#'],
+  '.yml': ['#'],
+  '.yaml': ['#'],
+  '.toml': ['#'],
+  '.pl': ['#'],
+  '.sql': ['--'],
+  '.lua': ['--'],
+  '.hs': ['--'],
+  '.el': [';'],
+  '.clj': [';'],
+  '.lisp': [';'],
+};
+
+// Block-comment openers by extension. Only used to detect a comment that
+// both opens and (implicitly, on the same line) could contain the marker -
+// we don't track multi-line comment state across a hunk.
+const BLOCK_COMMENT_OPEN: Record<string, string> = {
+  '.js': '/*',
+  '.jsx': '/*',
+  '.ts': '/*',
+  '.tsx': '/*',
+  '.mjs': '/*',
+  '.cjs': '/*',
+  '.c': '/*',
+  '.h': '/*',
+  '.cpp': '/*',
+  '.hpp': '/*',
+  '.cc': '/*',
+  '.java': '/*',
+  '.go': '/*',
+  '.rs': '/*',
+  '.swift': '/*',
+  '.kt': '/*',
+  '.scala': '/*',
+  '.php': '/*',
+  '.css': '/*',
+  '.scss': '/*',
+  '.less': '/*',
+};
+
+// Index of the earliest comment opener on the line, or -1 if none of the
+// tokens known for this extension appear.
+function earliestCommentIndex(text: string, ext: string): number {
+  let earliest = -1;
+  for (const token of LINE_COMMENT_TOKENS[ext] ?? []) {
+    const idx = text.indexOf(token);
+    if (idx !== -1 && (earliest === -1 || idx < earliest)) earliest = idx;
+  }
+  const blockToken = BLOCK_COMMENT_OPEN[ext];
+  if (blockToken) {
+    const idx = text.indexOf(blockToken);
+    if (idx !== -1 && (earliest === -1 || idx < earliest)) earliest = idx;
+  }
+  return earliest;
+}
+
 export const todoMarker: Rule = {
   name: 'todo-marker',
   check(file) {
     const findings: Finding[] = [];
+    const ext = extname(file.path);
+    const known = ext in LINE_COMMENT_TOKENS || ext in BLOCK_COMMENT_OPEN;
     for (const { text, line } of addedLines(file)) {
       const match = /\b(TODO|FIXME|XXX)\b/.exec(text);
-      if (match) {
-        findings.push({
-          file: file.path,
-          line,
-          rule: 'todo-marker',
-          message: `added line introduces a ${match[1]} marker`,
-        });
+      if (!match) continue;
+      // For a recognized language, only count the marker if it sits inside
+      // a comment - a TODO in a string literal or identifier isn't one we
+      // want reported. Unrecognized extensions fall back to matching
+      // anywhere on the line, since we have no comment syntax to check.
+      if (known) {
+        const commentIndex = earliestCommentIndex(text, ext);
+        if (commentIndex === -1 || commentIndex > match.index) continue;
       }
+      findings.push({
+        file: file.path,
+        line,
+        rule: 'todo-marker',
+        message: `added line introduces a ${match[1]} marker`,
+      });
     }
     return findings;
   },

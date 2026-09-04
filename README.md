@@ -12,7 +12,11 @@ Right now it catches four things in added lines:
 
 - trailing whitespace
 - lines over 120 characters
-- leftover `TODO` / `FIXME` / `XXX` markers
+- leftover `TODO` / `FIXME` / `XXX` markers left in a comment (for
+  recognized extensions - `.py`, `.go`, `.rs`, `.sql`, and around thirty
+  others - the marker only counts if it's actually inside a `//`, `#`,
+  `--`, or `/* */` comment, not a string or identifier; unrecognized
+  extensions fall back to matching the marker anywhere on the line)
 - CRLF line endings mixed into an otherwise LF file
 
 ## Usage

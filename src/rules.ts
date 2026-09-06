@@ -173,6 +173,27 @@ export const todoMarker: Rule = {
   },
 };
 
+export const mixedIndentation: Rule = {
+  name: 'mixed-indentation',
+  check(file) {
+    const findings: Finding[] = [];
+    for (const { text, line } of addedLines(file)) {
+      const leading = /^[ \t]+/.exec(text);
+      if (!leading) continue;
+      const indent = leading[0];
+      if (indent.includes(' ') && indent.includes('\t')) {
+        findings.push({
+          file: file.path,
+          line,
+          rule: 'mixed-indentation',
+          message: 'added line mixes tabs and spaces in its indentation',
+        });
+      }
+    }
+    return findings;
+  },
+};
+
 export const carriageReturn: Rule = {
   name: 'carriage-return',
   check(file) {
@@ -191,14 +212,26 @@ export const carriageReturn: Rule = {
   },
 };
 
-export const defaultRules: Rule[] = [trailingWhitespace, lineTooLong(), todoMarker, carriageReturn];
+export const defaultRules: Rule[] = [
+  trailingWhitespace,
+  lineTooLong(),
+  todoMarker,
+  carriageReturn,
+  mixedIndentation,
+];
 
 // Builds the rule set for a run: applies the configured line-length
 // threshold, then drops any rule explicitly set to `false` in config.
 // Rules are enabled unless a config says otherwise, so an empty or
 // partial `rules` block doesn't silently turn everything off.
 export function buildRules(config: Config = {}): Rule[] {
-  const all: Rule[] = [trailingWhitespace, lineTooLong(config.maxLineLength), todoMarker, carriageReturn];
+  const all: Rule[] = [
+    trailingWhitespace,
+    lineTooLong(config.maxLineLength),
+    todoMarker,
+    carriageReturn,
+    mixedIndentation,
+  ];
   const toggles = config.rules ?? {};
   return all.filter((rule) => toggles[rule.name] !== false);
 }

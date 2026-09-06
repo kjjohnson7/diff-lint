@@ -8,7 +8,7 @@ line number they'll have in the resulting file. That's the number you want
 when reviewing a PR or writing a pre-push hook — nobody wants a linter that
 flags a line you didn't touch because it happened to sit next to your edit.
 
-Right now it catches four things in added lines:
+Right now it catches five things in added lines:
 
 - trailing whitespace
 - lines over 120 characters
@@ -18,6 +18,7 @@ Right now it catches four things in added lines:
   `--`, or `/* */` comment, not a string or identifier; unrecognized
   extensions fall back to matching the marker anywhere on the line)
 - CRLF line endings mixed into an otherwise LF file
+- indentation that mixes tabs and spaces on the same line
 
 ## Usage
 
@@ -60,7 +61,7 @@ git diff | node dist/cli.js --format json
 
 ## Configuration
 
-By default all four rules run with a 120-character line limit. To change
+By default all five rules run with a 120-character line limit. To change
 that, drop a `.difflintrc.json` in your project root (difflint walks up
 from the current directory looking for one, so it's found from a
 subdirectory too):

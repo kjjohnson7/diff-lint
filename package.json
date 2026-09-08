@@ -9,7 +9,9 @@
     "difflint": "dist/cli.js"
   },
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "pretest": "npm run build",
+    "test": "node --test test/"
   },
   "devDependencies": {
     "typescript": "^5.5.0"

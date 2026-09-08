@@ -81,6 +81,15 @@ for `line-too-long`. Both keys are optional, and an invalid config (bad
 JSON, wrong value types) makes difflint exit with an error rather than
 silently ignoring it.
 
+## Running the tests
+
+Tests use node's built-in test runner and run against the compiled `dist`
+output, so `npm test` builds first:
+
+```
+npm test
+```
+
 ## Using it as a library
 
 `parseDiff` and the individual rules are exported from `dist/index.js` if

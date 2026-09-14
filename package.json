@@ -6,7 +6,8 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "difflint": "dist/cli.js"
+    "difflint": "dist/cli.js",
+    "difflint-install-hook": "dist/install-hook.js"
   },
   "scripts": {
     "build": "tsc",

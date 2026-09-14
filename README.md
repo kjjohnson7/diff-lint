@@ -50,6 +50,19 @@ gate or a pre-commit hook:
 git diff --cached | node dist/cli.js || exit 1
 ```
 
+To wire that into git directly, run the installer instead of writing the
+hook by hand:
+
+```
+node dist/install-hook.js
+```
+
+That writes `.git/hooks/pre-commit`, marks it executable, and the hook
+runs `git diff --cached` through `difflint` on every commit, blocking it
+if anything is found. Re-running the installer is safe — it only
+overwrites hooks it wrote itself, and refuses to touch a pre-existing
+`pre-commit` hook from something else unless you pass `--force`.
+
 Pass `--format json` to get findings as a JSON array on stdout instead,
 one object per finding with the same `file`, `line`, `rule`, and `message`
 fields as the text output. Useful for feeding the results into another

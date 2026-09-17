@@ -72,6 +72,16 @@ tool rather than a terminal:
 git diff | node dist/cli.js --format json
 ```
 
+Sometimes there's no diff to compare against - a new file has nothing to
+diff against yet, or you just want to check a file's current state
+regardless of what changed. Pass `--files` with one or more paths and
+difflint lints the whole file, treating every line as added and numbered
+from 1:
+
+```
+node dist/cli.js --files src/server.ts src/config.ts
+```
+
 ## Configuration
 
 By default all five rules run with a 120-character line limit. To change

@@ -75,3 +75,23 @@ function stripPathPrefix(path: string): string {
   if (path === '/dev/null') return path;
   return path.replace(/^[ab]\//, '');
 }
+
+// Wraps a whole file's contents in the same FileDiff shape parseDiff
+// produces, with every line treated as added, so rules can run over a
+// working-tree file without a diff to compare it against.
+export function fileToDiff(path: string, content: string): FileDiff {
+  const lines = content.split('\n');
+  // A trailing newline is the normal case and splits into a trailing empty
+  // element; drop it so an N-line file reports N lines, not N+1.
+  if (lines.length > 0 && lines[lines.length - 1] === '') {
+    lines.pop();
+  }
+
+  const hunk: Hunk = {
+    oldStart: 0,
+    newStart: 1,
+    lines: lines.map((text, i) => ({ type: 'add' as const, text, newLine: i + 1 })),
+  };
+
+  return { path, hunks: [hunk] };
+}

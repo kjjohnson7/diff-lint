@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { readFileSync } from 'node:fs';
 import { loadConfig } from './config';
-import { parseDiff } from './parser';
+import { fileToDiff, parseDiff, type FileDiff } from './parser';
 import { buildRules, type Finding } from './rules';
 
 type Format = 'text' | 'json';
@@ -9,11 +9,14 @@ type Format = 'text' | 'json';
 interface Args {
   format: Format;
   path?: string;
+  files?: string[];
 }
 
 function parseArgs(argv: string[]): Args {
   let format: Format = 'text';
   let path: string | undefined;
+  let filesMode = false;
+  const files: string[] = [];
 
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
@@ -23,8 +26,14 @@ function parseArgs(argv: string[]): Args {
       formatValue = argv[++i];
     } else if (arg.startsWith('--format=')) {
       formatValue = arg.slice('--format='.length);
+    } else if (arg === '--files') {
+      filesMode = true;
+      continue;
     } else if (arg.startsWith('--')) {
       throw new Error(`difflint: unknown option ${arg}`);
+    } else if (filesMode) {
+      files.push(arg);
+      continue;
     } else {
       path = arg;
       continue;
@@ -36,7 +45,11 @@ function parseArgs(argv: string[]): Args {
     format = formatValue;
   }
 
-  return { format, path };
+  if (filesMode && files.length === 0) {
+    throw new Error('difflint: --files requires at least one file path');
+  }
+
+  return { format, path, files: filesMode ? files : undefined };
 }
 
 function readInput(path?: string): string {
@@ -57,9 +70,11 @@ function main(): void {
     process.exit(2);
   }
 
-  let input: string;
+  let files: FileDiff[];
   try {
-    input = readInput(args.path);
+    files = args.files
+      ? args.files.map((path) => fileToDiff(path, readFileSync(path, 'utf8')))
+      : parseDiff(readInput(args.path));
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error(`difflint: could not read input: ${message}`);
@@ -75,7 +90,6 @@ function main(): void {
     process.exit(2);
   }
 
-  const files = parseDiff(input);
   const findings: Finding[] = [];
   for (const file of files) {
     for (const rule of rules) {

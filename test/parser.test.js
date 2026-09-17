@@ -2,7 +2,7 @@
 
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { parseDiff } = require('../dist/parser');
+const { parseDiff, fileToDiff } = require('../dist/parser');
 
 test('parses added, deleted, and context lines with resolved line numbers', () => {
   const diff = [
@@ -102,4 +102,31 @@ test('ignores "no newline at end of file" markers and lines before the first hun
 
 test('returns no files for input with no diff content', () => {
   assert.deepEqual(parseDiff(''), []);
+});
+
+test('fileToDiff treats every line of a file as added, numbered from 1', () => {
+  const file = fileToDiff('src/foo.js', 'line one\nline two\nline three\n');
+  assert.equal(file.path, 'src/foo.js');
+  assert.equal(file.hunks.length, 1);
+  assert.deepEqual(
+    file.hunks[0].lines.map((l) => [l.type, l.text, l.newLine]),
+    [
+      ['add', 'line one', 1],
+      ['add', 'line two', 2],
+      ['add', 'line three', 3],
+    ],
+  );
+});
+
+test('fileToDiff does not count the trailing newline as an extra line', () => {
+  const withTrailingNewline = fileToDiff('a.txt', 'only line\n');
+  assert.equal(withTrailingNewline.hunks[0].lines.length, 1);
+
+  const withoutTrailingNewline = fileToDiff('a.txt', 'only line');
+  assert.equal(withoutTrailingNewline.hunks[0].lines.length, 1);
+});
+
+test('fileToDiff on an empty file produces no lines', () => {
+  const file = fileToDiff('empty.txt', '');
+  assert.equal(file.hunks[0].lines.length, 0);
 });

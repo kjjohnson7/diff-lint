@@ -104,6 +104,18 @@ for `line-too-long`. Both keys are optional, and an invalid config (bad
 JSON, wrong value types) makes difflint exit with an error rather than
 silently ignoring it.
 
+To use a config file that isn't discoverable by walking up from the
+current directory - shared config kept elsewhere, or running the same
+checks with a stricter profile in CI - pass `--config` with a path,
+which skips discovery entirely:
+
+```
+node dist/cli.js --config ci/difflintrc.strict.json my-change.patch
+```
+
+A missing `--config` path is an error rather than falling back to the
+defaults.
+
 ## Running the tests
 
 Tests use node's built-in test runner and run against the compiled `dist`

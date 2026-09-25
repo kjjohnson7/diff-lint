@@ -10,11 +10,13 @@ interface Args {
   format: Format;
   path?: string;
   files?: string[];
+  config?: string;
 }
 
 function parseArgs(argv: string[]): Args {
   let format: Format = 'text';
   let path: string | undefined;
+  let config: string | undefined;
   let filesMode = false;
   const files: string[] = [];
 
@@ -26,6 +28,16 @@ function parseArgs(argv: string[]): Args {
       formatValue = argv[++i];
     } else if (arg.startsWith('--format=')) {
       formatValue = arg.slice('--format='.length);
+    } else if (arg === '--config') {
+      const value = argv[++i];
+      if (value === undefined) {
+        throw new Error('difflint: --config requires a file path');
+      }
+      config = value;
+      continue;
+    } else if (arg.startsWith('--config=')) {
+      config = arg.slice('--config='.length);
+      continue;
     } else if (arg === '--files') {
       filesMode = true;
       continue;
@@ -49,7 +61,7 @@ function parseArgs(argv: string[]): Args {
     throw new Error('difflint: --files requires at least one file path');
   }
 
-  return { format, path, files: filesMode ? files : undefined };
+  return { format, path, files: filesMode ? files : undefined, config };
 }
 
 function readInput(path?: string): string {
@@ -83,7 +95,7 @@ function main(): void {
 
   let rules;
   try {
-    rules = buildRules(loadConfig());
+    rules = buildRules(loadConfig(process.cwd(), args.config));
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error(message);

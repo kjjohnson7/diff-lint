@@ -13,9 +13,13 @@ export interface Config {
 
 const CONFIG_FILENAME = '.difflintrc.json';
 
-export function loadConfig(startDir: string = process.cwd()): Config {
-  const path = findConfigFile(startDir);
+export function loadConfig(startDir: string = process.cwd(), explicitPath?: string): Config {
+  const path = explicitPath ? resolve(explicitPath) : findConfigFile(startDir);
   if (!path) return {};
+
+  if (explicitPath && !existsSync(path)) {
+    throw new Error(`difflint: config file not found: ${path}`);
+  }
 
   const raw = readFileSync(path, 'utf8');
 

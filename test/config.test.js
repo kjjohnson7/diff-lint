@@ -67,3 +67,33 @@ test('throws when maxLineLength is not a positive number', (t) => {
   withConfig(dir, JSON.stringify({ maxLineLength: -5 }));
   assert.throws(() => loadConfig(dir), /"maxLineLength" must be a positive number/);
 });
+
+test('an explicit config path overrides discovery', (t) => {
+  const dir = makeTmpDir();
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+
+  // Not named .difflintrc.json and not in a discoverable location.
+  const customPath = path.join(dir, 'custom-config.json');
+  fs.writeFileSync(customPath, JSON.stringify({ maxLineLength: 42 }));
+
+  assert.deepEqual(loadConfig(dir, customPath), { maxLineLength: 42 });
+});
+
+test('an explicit config path wins even when a discoverable config exists', (t) => {
+  const dir = makeTmpDir();
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+
+  withConfig(dir, JSON.stringify({ maxLineLength: 80 }));
+  const customPath = path.join(dir, 'custom-config.json');
+  fs.writeFileSync(customPath, JSON.stringify({ maxLineLength: 42 }));
+
+  assert.deepEqual(loadConfig(dir, customPath), { maxLineLength: 42 });
+});
+
+test('throws when the explicit config path does not exist', (t) => {
+  const dir = makeTmpDir();
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+
+  const missingPath = path.join(dir, 'missing.json');
+  assert.throws(() => loadConfig(dir, missingPath), /config file not found/);
+});
